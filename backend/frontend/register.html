@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Panic – Реєстрація</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .auth-screen {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 460px;
+      background:
+        linear-gradient(135deg, rgba(94, 234, 212, 0.12), transparent),
+        rgba(15, 23, 42, 0.94);
+      border: 1px solid rgba(94, 234, 212, 0.55);
+      border-radius: 18px;
+      padding: 32px;
+      box-shadow: 0 0 35px rgba(94, 234, 212, 0.22);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-card::before {
+      content: "CREATE OPERATOR";
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      color: rgba(94, 234, 212, 0.25);
+      font-size: 12px;
+      letter-spacing: 2px;
+    }
+
+    .auth-card h1 {
+      text-align: center;
+      color: #5eead4;
+      text-shadow: 0 0 12px #5eead4;
+      margin-bottom: 8px;
+    }
+
+    .auth-subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      margin-top: 12px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background: #020617;
+      color: #e2e8f0;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #5eead4;
+      box-shadow: 0 0 12px rgba(94, 234, 212, 0.45);
+    }
+
+    .auth-button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 14px;
+      font-size: 15px;
+    }
+
+    .auth-links {
+      margin-top: 18px;
+      text-align: center;
+      color: #94a3b8;
+    }
+
+    .auth-links a {
+      color: #22d3ee;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .auth-links a:hover {
+      text-shadow: 0 0 8px #22d3ee;
+    }
+
+    .message {
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .error {
+      color: #f87171;
+    }
+
+    .success {
+      color: #4ade80;
+    }
+  </style>
+</head>
+
+<script src="sound.js"></script>
+
+<body>
+  <main class="auth-screen">
+    <section class="auth-card">
+      <h1>📝 NEW OPERATOR</h1>
+      <p class="auth-subtitle">Створення профілю гравця JSON Panic</p>
+
+      <input type="text" id="username" placeholder="Ім'я оператора">
+      <input type="email" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="Пароль">
+
+      <button class="auth-button" onclick="register()">Створити акаунт</button>
+
+      <div class="auth-links">
+        <p>Уже є акаунт? <a href="login.html">Увійти</a></p>
+        <p><a href="home.html">← На головну</a></p>
+      </div>
+
+      <p id="message" class="message"></p>
+    </section>
+  </main>
+
+<script>
+async function register() {
+  const username = document.getElementById("username").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const message = document.getElementById("message");
+
+  if (!username || !email || !password) {
+    message.innerHTML = "<span class='error'>Заповніть всі поля</span>";
+    return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(email)) {
+    message.innerHTML = "<span class='error'>Введіть коректний email</span>";
+    return;
+  }
+
+  if (password.length < 6) {
+    message.innerHTML = "<span class='error'>Пароль має містити мінімум 6 символів</span>";
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:5000/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ username, email, password })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      message.innerHTML = "<span class='error'>" + data.message + "</span>";
+      return;
+    }
+
+    localStorage.removeItem("guestMode");
+    message.innerHTML = "<span class='success'>OPERATOR CREATED · Тепер увійдіть</span>";
+
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 1000);
+
+  } catch (error) {
+    message.innerHTML = "<span class='error'>Помилка з'єднання з сервером</span>";
+  }
+}
+</script>
+
+</body>
+</html>

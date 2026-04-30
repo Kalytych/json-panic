@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Panic – Довідка</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .help-hero {
+      padding: 32px 40px;
+      background:
+        linear-gradient(135deg, rgba(94, 234, 212, 0.14), transparent),
+        rgba(2, 6, 23, 0.94);
+      border-bottom: 2px solid #5eead4;
+    }
+
+    .help-hero h1 {
+      margin: 0;
+      font-size: 42px;
+      color: #5eead4;
+      text-shadow: 0 0 14px rgba(94, 234, 212, 0.9);
+    }
+
+    .help-shell {
+      padding: 32px 40px;
+      max-width: 1200px;
+    }
+
+    .manual-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .terminal-card {
+      position: relative;
+      overflow: hidden;
+      border-left: 4px solid #22d3ee;
+    }
+
+    .terminal-card::before {
+      content: "JSON OPERATOR MANUAL";
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      color: rgba(34, 211, 238, 0.25);
+      font-size: 12px;
+      letter-spacing: 2px;
+    }
+
+    .rule-list li {
+      margin-bottom: 10px;
+    }
+
+    .code-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .code-box {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .code-box.bad-box {
+      border-color: rgba(248, 113, 113, 0.65);
+      box-shadow: 0 0 18px rgba(248, 113, 113, 0.12);
+    }
+
+    .code-box.good-box {
+      border-color: rgba(74, 222, 128, 0.65);
+      box-shadow: 0 0 18px rgba(74, 222, 128, 0.12);
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      color: #d1d5db;
+      font-size: 14px;
+    }
+
+    .bad {
+      color: #f87171;
+      font-weight: bold;
+    }
+
+    .good {
+      color: #4ade80;
+      font-weight: bold;
+    }
+
+    .lesson-badge {
+      display: inline-block;
+      padding: 6px 11px;
+      border-radius: 20px;
+      background: rgba(34, 211, 238, 0.12);
+      border: 1px solid #22d3ee;
+      color: #67e8f9;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .flow-step {
+      background: rgba(2, 6, 23, 0.65);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .flow-step strong {
+      display: block;
+      color: #5eead4;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 850px) {
+      .manual-grid,
+      .code-compare {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<script src="sound.js"></script>
+
+<body>
+  <header class="help-hero">
+    <h1>📘 Кодекс JSON-оператора</h1>
+    <p>Навчальний термінал для швидкого розбору JSON-синтаксису, типових помилок і правил гри</p>
+
+    <nav id="navMenu">
+      
+    </nav>
+  </header>
+
+  <main class="help-shell">
+    <section class="card terminal-card">
+      <span class="lesson-badge">MODULE 01 · BASICS</span>
+      <h2>Що таке JSON?</h2>
+      <p>
+        JSON — це текстовий формат зберігання і передачі структурованих даних.
+        У грі він використовується як конфігурація умовних серверних систем:
+        авторизації, бази даних, API Gateway, платежів, моніторингу та безпеки.
+      </p>
+
+      <div class="code-box good-box">
+<pre>{
+  "service": "auth",
+  "port": 8080,
+  "enabled": true
+}</pre>
+      </div>
+    </section>
+
+    <section class="manual-grid">
+      <div class="card terminal-card">
+        <span class="lesson-badge">MODULE 02 · RULES</span>
+        <h2>Основні правила JSON</h2>
+        <ul class="rule-list">
+          <li>Ключі завжди пишуться у подвійних лапках.</li>
+          <li>Рядки також пишуться у подвійних лапках.</li>
+          <li>Між полями ставиться кома.</li>
+          <li>Після останнього поля кома не ставиться.</li>
+          <li>Boolean-значення: <code>true</code> або <code>false</code>.</li>
+          <li><code>null</code> пишеться маленькими літерами.</li>
+          <li>Масиви записуються у квадратних дужках.</li>
+          <li>Об’єкти записуються у фігурних дужках.</li>
+        </ul>
+      </div>
+
+      <div class="card terminal-card">
+        <span class="lesson-badge">MODULE 03 · GAME FLOW</span>
+        <h2>Як працює JSON Panic?</h2>
+        <p>
+          Гравець обирає умовний сервер, відкриває пошкоджені JSON-файли й
+          поступово відновлює стабільність серверної системи.
+        </p>
+
+        <div class="flow">
+          <div class="flow-step">🖥️<strong>Сервер</strong></div>
+          <div class="flow-step">📁<strong>JSON-файл</strong></div>
+          <div class="flow-step">🛠️<strong>Виправлення</strong></div>
+          <div class="flow-step">✅<strong>Стабілізація</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card terminal-card">
+      <span class="lesson-badge">ERROR 01 · MISSING COMMA</span>
+      <h2>Типова помилка №1: пропущена кома</h2>
+
+      <div class="code-compare">
+        <div class="code-box bad-box">
+          <p class="bad">Неправильно</p>
+<pre>{
+  "service": "auth"
+  "port": 8080
+}</pre>
+        </div>
+
+        <div class="code-box good-box">
+          <p class="good">Правильно</p>
+<pre>{
+  "service": "auth",
+  "port": 8080
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="card terminal-card">
+      <span class="lesson-badge">ERROR 02 · BOOLEAN CASE</span>
+      <h2>Типова помилка №2: неправильний boolean</h2>
+
+      <div class="code-compare">
+        <div class="code-box bad-box">
+          <p class="bad">Неправильно</p>
+<pre>{
+  "enabled": True
+}</pre>
+        </div>
+
+        <div class="code-box good-box">
+          <p class="good">Правильно</p>
+<pre>{
+  "enabled": true
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="card terminal-card">
+      <span class="lesson-badge">ERROR 03 · WRONG TYPE</span>
+      <h2>Типова помилка №3: число записане як рядок</h2>
+
+      <div class="code-compare">
+        <div class="code-box bad-box">
+          <p class="bad">Неправильно</p>
+<pre>{
+  "port": "8080"
+}</pre>
+        </div>
+
+        <div class="code-box good-box">
+          <p class="good">Правильно</p>
+<pre>{
+  "port": 8080
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="card terminal-card">
+      <span class="lesson-badge">ERROR 04 · TRAILING COMMA</span>
+      <h2>Типова помилка №4: зайва кома</h2>
+
+      <div class="code-compare">
+        <div class="code-box bad-box">
+          <p class="bad">Неправильно</p>
+<pre>{
+  "service": "auth",
+  "enabled": true,
+}</pre>
+        </div>
+
+        <div class="code-box good-box">
+          <p class="good">Правильно</p>
+<pre>{
+  "service": "auth",
+  "enabled": true
+}</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const IS_GUEST = localStorage.getItem("guestMode") === "true";
+const USER_TOKEN = localStorage.getItem("token");
+
+function renderNav() {
+  const nav = document.getElementById("navMenu");
+
+  if (IS_GUEST || !USER_TOKEN) {
+    nav.innerHTML = `
+      <a href="home.html">🏠 Головна</a>
+      <a href="help.html">📘 Довідка</a>
+      <a href="#" onclick="startDemo()">🧪 Демо</a>
+      <a href="login.html">🔐 Увійти</a>
+    `;
+  } else {
+    nav.innerHTML = `
+      <a href="servers.html">🖥️ Сервери</a>
+      <a href="profile.html">👤 Профіль</a>
+      <a href="leaderboard.html">🏆 Лідерборд</a>
+      <a href="help.html">📘 Довідка</a>
+      <a href="#" onclick="logout()" style="color:#f87171;">🚪 Вийти</a>
+    `;
+  }
+}
+
+function startDemo() {
+  localStorage.setItem("guestMode", "true");
+  localStorage.setItem("selectedServerId", "1");
+  localStorage.setItem("selectedLevelId", "1");
+  localStorage.setItem("selectedLevelOrder", "1");
+  window.location.href = "index.html";
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("guestMode");
+  localStorage.removeItem("selectedServerId");
+  localStorage.removeItem("selectedLevelId");
+  localStorage.removeItem("selectedLevelOrder");
+  window.location.href = "home.html";
+}
+
+renderNav();
+</script>
+
+</body>
+</html>

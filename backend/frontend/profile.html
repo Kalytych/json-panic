@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Panic – Профіль</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .profile-hero {
+      padding: 32px 40px;
+      background:
+        linear-gradient(135deg, rgba(34, 211, 238, 0.14), transparent),
+        rgba(2, 6, 23, 0.92);
+      border-bottom: 2px solid #22d3ee;
+    }
+
+    .profile-hero h1 {
+      margin: 0;
+      font-size: 42px;
+      color: #22d3ee;
+      text-shadow: 0 0 14px #22d3ee;
+    }
+
+    .profile-shell {
+      padding: 32px 40px;
+    }
+
+    .pilot-card {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 22px;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .avatar-core {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #67e8f9, #0f172a 70%);
+      box-shadow: 0 0 28px rgba(34, 211, 238, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      animation: avatarPulse 1.6s infinite alternate;
+    }
+
+    @keyframes avatarPulse {
+      from { box-shadow: 0 0 18px rgba(34, 211, 238, 0.45); }
+      to { box-shadow: 0 0 36px rgba(34, 211, 238, 0.95); }
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 18px;
+    }
+
+    .stat-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 120px;
+    }
+
+    .stat-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent, rgba(34, 211, 238, 0.12), transparent);
+      transform: translateX(-100%);
+      transition: 0.7s;
+    }
+
+    .stat-card:hover::after {
+      transform: translateX(100%);
+    }
+
+    .stat-label {
+      color: #94a3b8;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-value {
+      font-size: 38px;
+      font-weight: bold;
+      color: #5eead4;
+      margin-top: 10px;
+      text-shadow: 0 0 10px rgba(94, 234, 212, 0.55);
+    }
+
+    .section-title {
+      margin-top: 42px;
+      color: #22d3ee;
+      text-shadow: 0 0 10px #22d3ee;
+    }
+
+    .server-progress-grid,
+    .achievement-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .server-progress-card {
+      border-left: 4px solid #22d3ee;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 18px;
+      background: #334155;
+      border-radius: 20px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22d3ee, #22c55e);
+      width: 0%;
+      box-shadow: 0 0 12px rgba(34, 211, 238, 0.55);
+    }
+
+    .crown {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(250, 204, 21, 0.13);
+      border: 1px solid #facc15;
+      color: #fde68a;
+      font-weight: bold;
+    }
+
+    .achievement-card {
+      border: 1px solid rgba(250, 204, 21, 0.45);
+      background:
+        linear-gradient(135deg, rgba(250, 204, 21, 0.09), transparent),
+        rgba(15, 23, 42, 0.92);
+    }
+
+    .achievement-icon {
+      font-size: 36px;
+      display: inline-block;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.7));
+    }
+
+    .empty-state {
+      padding: 22px;
+      border: 1px dashed #334155;
+      border-radius: 12px;
+      color: #94a3b8;
+      background: rgba(15, 23, 42, 0.55);
+    }
+
+    .error {
+      color: #f87171;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 700px) {
+      .pilot-card {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<script src="sound.js"></script>
+<script>
+  playMusic("menu.mp3");
+</script>
+<body>
+  <header class="profile-hero">
+    <h1>👤 Операційний профіль</h1>
+    <p>Статистика гравця, стабілізовані сервери, корони та досягнення</p>
+
+    <nav>
+      <a href="servers.html">🖥️ Сервери</a>
+      <a href="profile.html">👤 Профіль</a>
+      <a href="leaderboard.html">🏆 Лідерборд</a>
+      <a href="help.html">📘 Довідка</a>
+      <a href="#" id="soundToggle" onclick="toggleSound()">🔊 Звук</a>
+      <a href="#" onclick="logout()" style="color:#f87171;">🚪 Вийти</a>
+    </nav>
+  </header>
+
+  <main class="profile-shell">
+    <section class="card pilot-card">
+      <div class="avatar-core">🧑‍💻</div>
+      <div>
+        <h2 id="playerName">JSON Operator</h2>
+        <p class="small">
+          Роль: <strong id="playerRole">user</strong> · статус: <span class="status-good">ACTIVE</span>
+        </p>
+        <p>
+          Твоя задача — стабілізувати пошкоджені серверні системи, виправляючи JSON-конфіги.
+          Чим швидше та точніше проходження, тим кращий рейтинг.
+        </p>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <div class="card stat-card">
+        <div class="stat-label">Ігрові сесії</div>
+        <div class="stat-value" id="totalSessions">0</div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-label">Пройдено JSON</div>
+        <div class="stat-value" id="completedLevels">0</div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-label">Загальний бал</div>
+        <div class="stat-value" id="totalScore">0</div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-label">Середній бал</div>
+        <div class="stat-value" id="averageScore">0</div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-label">Середній час</div>
+        <div class="stat-value" id="averageTime">0</div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-label">Усього спроб</div>
+        <div class="stat-value" id="totalAttempts">0</div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-label">Підказки</div>
+        <div class="stat-value" id="totalHints">0</div>
+      </div>
+    </section>
+
+    <h2 class="section-title">🖥️ Прогрес серверів</h2>
+    <section id="serverProgressContainer" class="server-progress-grid"></section>
+
+    <h2 class="section-title">🏅 Досягнення</h2>
+    <section id="achievementsContainer" class="achievement-grid"></section>
+
+    <div id="status"></div>
+  </main>
+
+<script>
+const USER_TOKEN = localStorage.getItem("token");
+const IS_GUEST = localStorage.getItem("guestMode") === "true";
+const USER = JSON.parse(localStorage.getItem("user") || "null");
+
+if (!USER_TOKEN || IS_GUEST) {
+  window.location.href = "home.html";
+}
+
+if (USER) {
+  document.getElementById("playerName").innerText = USER.username || "JSON Operator";
+  document.getElementById("playerRole").innerText = USER.role || "user";
+}
+
+async function loadStats() {
+  try {
+    const response = await fetch("http://localhost:5000/api/game/stats/me", {
+      method: "GET",
+      headers: {
+        "Authorization": "Bearer " + USER_TOKEN
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      document.getElementById("status").innerHTML =
+        "<p class='error'>Помилка завантаження статистики: " + data.message + "</p>";
+      return;
+    }
+
+    const stats = data.stats || {};
+
+    document.getElementById("totalSessions").innerText = stats.total_sessions || 0;
+    document.getElementById("completedLevels").innerText = stats.completed_levels || 0;
+    document.getElementById("totalScore").innerText = stats.total_score || 0;
+    document.getElementById("averageScore").innerText = stats.average_score || 0;
+    document.getElementById("averageTime").innerText = (stats.average_time || 0) + "с";
+    document.getElementById("totalAttempts").innerText = stats.total_attempts || 0;
+    document.getElementById("totalHints").innerText = stats.total_hints || 0;
+
+    renderServerProgress(data.server_progress || []);
+    renderAchievements(data.achievements || []);
+
+  } catch (error) {
+    document.getElementById("status").innerHTML =
+      "<p class='error'>Помилка з'єднання з сервером</p>";
+  }
+}
+
+function renderServerProgress(progressList) {
+  const container = document.getElementById("serverProgressContainer");
+  container.innerHTML = "";
+
+  if (progressList.length === 0) {
+    container.innerHTML = "<div class='empty-state'>Поки що немає прогресу серверів. Обери сервер і віднови перший JSON.</div>";
+    return;
+  }
+
+  progressList.forEach(item => {
+    const stability = item.stability || 0;
+    const card = document.createElement("div");
+    card.className = "card server-progress-card";
+
+    let statusClass = "status-danger";
+    let statusText = "CRITICAL";
+
+    if (stability >= 100) {
+      statusClass = "status-good";
+      statusText = "STABLE";
+    } else if (stability >= 60) {
+      statusClass = "status-warning";
+      statusText = "PARTIAL";
+    }
+
+    card.innerHTML = `
+      <h3>${item.reward_icon || "🖥️"} ${item.title}</h3>
+      <p class="small">STATUS: <span class="${statusClass}">${statusText}</span></p>
+      <p><strong>Пройдено:</strong> ${item.completed_levels || 0} / ${item.total_levels || 0} JSON</p>
+      <p><strong>Стабільність:</strong> ${stability}%</p>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${stability}%"></div>
+      </div>
+      <p><strong>Бали:</strong> ${item.total_score || 0}</p>
+      <span class="crown">${item.crown || "корона ще не отримана"}</span>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function renderAchievements(achievements) {
+  const container = document.getElementById("achievementsContainer");
+  container.innerHTML = "";
+
+  if (achievements.length === 0) {
+    container.innerHTML = "<div class='empty-state'>Досягнень поки що немає. Пройди JSON без підказок або заверши сервер.</div>";
+    return;
+  }
+
+  achievements.forEach(a => {
+    const card = document.createElement("div");
+    card.className = "card achievement-card";
+
+    card.innerHTML = `
+      <div class="achievement-icon">${a.icon || "🏅"}</div>
+      <h3>${a.name}</h3>
+      <p>${a.description}</p>
+      <p class="small">Отримано: ${a.earned_at}</p>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("guestMode");
+  localStorage.removeItem("selectedServerId");
+  localStorage.removeItem("selectedLevelId");
+  localStorage.removeItem("selectedLevelOrder");
+  window.location.href = "home.html";
+}
+
+loadStats();
+</script>
+
+</body>
+</html>

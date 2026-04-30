@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Panic – Game</title>
+
+  <link rel="stylesheet" href="styles.css">
+
+</head>
+
+<script src="sound.js"></script>
+
+<script>
+  playMusic("game.mp3");
+  </script>
+
+<body>
+  <div id="panicOverlay" class="panic-overlay"></div>
+  <header>
+    <h1>🔥 JSON Panic</h1>
+    <p>Виправ пошкоджений JSON-файл і стабілізуй ігровий сервер</p>
+
+    <nav>
+      <a href="servers.html">🖥️ Сервери</a>
+      <a href="server.html">📁 Поточний сервер</a>
+      <a href="profile.html">👤 Профіль</a>
+      <a href="leaderboard.html">🏆 Лідерборд</a>
+      <a href="#" onclick="logout()" style="color:#f87171;">🚪 Вийти</a>
+    </nav>
+  </header>
+
+ <main class="game-layout">
+
+    <section id="gamePanel" class="game-card">
+      <h2 id="levelTitle">Завантаження JSON...</h2>
+      <p id="levelDescription"></p>
+
+      <p>
+        <span class="badge" id="fileNameBadge">file.json</span>
+        <span class="badge" id="difficultyBadge">difficulty</span>
+        <span class="badge" id="modeBadge">mode</span>
+      </p>
+
+      <textarea id="jsonInput" class="json-terminal"></textarea>
+
+      <br>
+
+      <button onclick="checkJSON()">Перевірити JSON</button>
+      <button onclick="showHint()">Підказка</button>
+      <button onclick="resetLevel()" class="secondary">Скинути</button>
+      <button onclick="goBackToServer()" class="secondary">Назад до сервера</button>
+
+      <div id="result"></div>
+    </section>
+
+    <aside id="serverMonitor" class="game-card server-monitor">
+      <h2>🖥️ Стан сервера</h2>
+
+      <div class="stat">
+        <strong>Прогрес JSON:</strong>
+        <span id="levelProgressText">1 / 1</span>
+      </div>
+
+      <div class="stat">
+        <strong>Відновлення сервера:</strong>
+        <span id="serverRepairText">0%</span>
+        <div class="bar">
+          <div id="serverRepairBar" class="bar-fill"></div>
+        </div>
+      </div>
+
+      <div class="stat">
+        <strong>Стабільність:</strong>
+        <span id="stabilityText">30%</span>
+        <div class="bar">
+          <div id="stabilityBar" class="bar-fill"></div>
+        </div>
+      </div>
+
+      <div class="stat">
+        <strong>Статус:</strong>
+        <p id="serverStatus">Очікування...</p>
+      </div>
+
+      <div class="stat">
+        <strong>⏱️ Час:</strong>
+        <span id="timer">0</span> / <span id="timeLimit">∞</span> сек.
+      </div>
+
+      <div class="stat">
+        <strong>🎯 Спроби:</strong>
+        <span id="attempts">0</span>
+      </div>
+
+      <div class="stat">
+        <strong>💡 Підказки:</strong>
+        <span id="hints">0</span>
+      </div>
+
+      <div class="stat">
+        <strong>⭐ Бали:</strong>
+        <span id="score">100</span>
+      </div>
+
+      <div class="stat">
+        <strong>📟 Системний журнал:</strong>
+        <div id="systemLog" class="system-log"></div>
+      </div>
+      
+      <div class="stat">
+        <strong>🔥 Серія:</strong>
+        <div id="comboBox" class="combo-box">COMBO x0</div>
+      </div>
+
+      <div class="stat">
+        <strong>📘 Пояснення після проходження:</strong>
+        <pre id="explanationPreview">Буде показано після успіху</pre>
+      </div>
+
+      <div class="stat">
+        <strong>✅ Правильний JSON:</strong>
+        <pre id="correctPreview">Буде показано після успіху</pre>
+      </div>
+    </aside>
+  </main>
+
+<script>
+const IS_GUEST = localStorage.getItem("guestMode") === "true";
+const USER_TOKEN = localStorage.getItem("token");
+const USER = JSON.parse(localStorage.getItem("user") || "null");
+
+if (!USER_TOKEN && !IS_GUEST) {
+  window.location.href = "login.html";
+}
+
+let selectedServerId = localStorage.getItem("selectedServerId");
+let selectedLevelId = localStorage.getItem("selectedLevelId");
+
+if (!selectedServerId || !selectedLevelId) {
+  window.location.href = "servers.html";
+}
+
+let level = null;
+let serverLevels = [];
+let correctJSON = null;
+let brokenJSON = "";
+let attempts = 0;
+let hintsUsed = 0;
+let score = 100;
+let serverStability = 30;
+let seconds = 0;
+let timerInterval = null;
+let completed = false;
+
+async function loadLevel() {
+  try {
+    const levelsRes = await fetch("http://localhost:5000/api/servers/" + selectedServerId + "/levels");
+    serverLevels = await levelsRes.json();
+
+    const res = await fetch("http://localhost:5000/api/levels/" + selectedLevelId);
+    level = await res.json();
+
+    correctJSON = level.correct_json;
+    brokenJSON = level.broken_json;
+
+    attempts = 0;
+    hintsUsed = 0;
+    score = level.max_score || 100;
+    seconds = 0;
+    completed = false;
+    document.getElementById("gamePanel").classList.remove("success-panel");
+document.getElementById("serverMonitor").classList.remove("success-panel");
+
+    const levelIndex = serverLevels.findIndex(l => Number(l.id) === Number(level.id));
+    const progressText = (levelIndex + 1) + " / " + serverLevels.length;
+
+    serverStability = Math.round(((levelIndex + 1) / serverLevels.length) * 100);
+    if (serverStability < 30) serverStability = 30;
+
+    document.getElementById("levelTitle").innerText = level.title;
+    document.getElementById("levelDescription").innerText = level.description;
+    document.getElementById("jsonInput").value = brokenJSON;
+
+    document.getElementById("fileNameBadge").innerText = level.file_name;
+    document.getElementById("difficultyBadge").innerText = "Складність: " + level.difficulty;
+    document.getElementById("modeBadge").innerText = "Режим: " + level.mode;
+
+    document.getElementById("serverStatus").innerText =
+      "Файл " + level.file_name + " пошкоджено. Потрібне ручне виправлення.";
+
+    document.getElementById("timeLimit").innerText =
+      level.time_limit > 0 ? level.time_limit : "∞";
+
+    document.getElementById("timer").innerText = "0";
+    document.getElementById("levelProgressText").innerText = progressText;
+    document.getElementById("correctPreview").innerText = "Буде показано після успіху";
+    document.getElementById("explanationPreview").innerText = "Буде показано після успіху";
+    document.getElementById("result").innerHTML = "";
+    document.getElementById("systemLog").innerHTML = "";
+addLog("info", "Loading corrupted file: " + level.file_name);
+addLog("warning", "Server module unstable. Manual JSON recovery required.");
+
+    clearInterval(timerInterval);
+    updateStats();
+    startTimer();
+
+  } catch (error) {
+    document.getElementById("result").innerHTML =
+      "<span class='danger'>Помилка завантаження рівня</span>";
+  }
+}
+
+function startTimer() {
+  const timeLimit = level.time_limit || 0;
+
+  timerInterval = setInterval(() => {
+    if (completed) return;
+
+    seconds++;
+    document.getElementById("timer").innerText = seconds;
+
+    if (seconds % 10 === 0 && score > 5) {
+      score -= 2;
+    }
+
+    if (timeLimit > 0) {
+      const remaining = timeLimit - seconds;
+
+      if (remaining <= 0) {
+        completed = true;
+        clearInterval(timerInterval);
+
+        document.getElementById("result").innerHTML =
+          "<span class='danger'>⏰ Час вийшов! Сервер залишився нестабільним.</span>";
+
+        serverStability = Math.max(serverStability - 20, 0);
+        updateStats();
+        return;
+      }
+    }
+
+    updateStats();
+  }, 1000);
+}
+
+function deepEqual(a, b) {
+  if (a === b) return true;
+
+  if (typeof a !== typeof b) return false;
+
+  if (a === null || b === null) return a === b;
+
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+
+    for (let i = 0; i < a.length; i++) {
+      if (!deepEqual(a[i], b[i])) return false;
+    }
+
+    return true;
+  }
+
+  if (typeof a === "object") {
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+
+    if (keysA.length !== keysB.length) return false;
+
+    for (const key of keysA) {
+      if (!keysB.includes(key)) return false;
+      if (!deepEqual(a[key], b[key])) return false;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+function checkJSON() {
+  if (completed) return;
+
+  attempts++;
+  score -= 5;
+
+  const input = document.getElementById("jsonInput").value;
+
+  try {
+    const parsed = JSON.parse(input);
+    const correct = JSON.parse(correctJSON);
+
+    if (deepEqual(parsed, correct)) {
+      playSound("success.mp3");
+      handleSuccess();
+    } else {
+      playSound("error.mp3");
+
+      serverStability -= 10;
+      if (serverStability < 5) serverStability = 5;
+
+      document.getElementById("result").innerHTML =
+        "<span class='warning'>⚠️ JSON валідний, але структура або значення неправильні.</span>";
+
+      triggerPanic();
+      updateCombo(false);
+      addLog("warning", "JSON parsed, but configuration does not match expected structure.");
+    }
+
+  } catch (error) {
+    playSound("error.mp3");
+
+    serverStability -= 15;
+    if (serverStability < 5) serverStability = 5;
+
+    document.getElementById("result").innerHTML =
+      "<span class='danger'>❌ Синтаксична помилка JSON:</span><br>" + error.message;
+
+    triggerPanic();
+    updateCombo(false);
+    addLog("error", "Parser failure: " + error.message);
+  }
+
+  if (score < 0) score = 0;
+  updateStats();
+}
+
+async function handleSuccess() {
+  completed = true;
+  clearInterval(timerInterval);
+
+  triggerSuccessEffect();
+updateCombo(true);
+addLog("success", "JSON repaired: " + level.file_name);
+document.getElementById("gamePanel").classList.add("success-panel");
+document.getElementById("serverMonitor").classList.add("success-panel");
+
+  const currentIndex = serverLevels.findIndex(l => Number(l.id) === Number(level.id));
+  const isLastLevel = currentIndex === serverLevels.length - 1;
+
+  serverStability = Math.round(((currentIndex + 1) / serverLevels.length) * 100);
+  if (serverStability < 100) {
+  addLog("info", "Partial recovery: server stability increased to " + serverStability + "%.");
+} else {
+  addLog("success", "Full recovery: server stability reached 100%.");
+}
+
+  if (attempts === 1) score += 20;
+  if (hintsUsed === 0) score += 15;
+  if (seconds <= 60) score += 10;
+  if (level.mode === "timed" && level.time_limit > 0 && seconds < level.time_limit) {
+    score += 20;
+  }
+
+  if (score < 0) score = 0;
+
+  document.getElementById("serverStatus").innerText =
+  isLastLevel
+    ? "✅ Сервер повністю стабілізовано. Усі JSON-файли відновлені."
+    : "🟡 Часткове відновлення: JSON-файл виправлено. Стабільність сервера підвищено до " + serverStability + "%.";
+
+  document.getElementById("correctPreview").innerText = correctJSON;
+  document.getElementById("explanationPreview").innerText =
+    level.explanation || "Пояснення для цього рівня відсутнє.";
+
+  await saveGameSession();
+
+  let nextButton = "";
+
+  if (!isLastLevel) {
+    const nextLevel = serverLevels[currentIndex + 1];
+
+    nextButton = `
+      <br><button onclick="goToNextLevel(${nextLevel.id}, ${nextLevel.order_number})">
+        ➡ Наступний JSON
+      </button>
+    `;
+  } else {
+    nextButton = `
+      <br><button onclick="finishServer()">
+        🏆 Завершити сервер
+      </button>
+    `;
+  }
+
+  document.getElementById("result").innerHTML = `
+  <div class="success-banner">
+    <h3>✅ SYSTEM RECOVERY SUCCESSFUL</h3>
+    <p>JSON-файл <strong>${level.file_name}</strong> успішно відновлено.</p>
+    <p>
+      ⏱️ Час: ${seconds} сек. |
+      🎯 Спроби: ${attempts} |
+      💡 Підказки: ${hintsUsed} |
+      ⭐ Бали: ${score}
+    </p>
+    <span class="server-restored-label">
+      🟢 SERVER MODULE RESTORED
+    </span>
+  </div>
+  ${nextButton}
+`;
+
+  updateStats();
+}
+
+async function saveGameSession() {
+  if (IS_GUEST) {
+    console.log("Guest mode: session is not saved");
+    return;
+  } 
+
+  try {
+    const response = await fetch("http://localhost:5000/api/game/sessions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + USER_TOKEN
+      },
+      body: JSON.stringify({
+        server_id: selectedServerId,
+        level_id: level.id,
+        score: score,
+        attempts: attempts,
+        hints_used: hintsUsed,
+        completed: true,
+        completion_time: seconds,
+        server_stability: serverStability,
+        mode: level.mode
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      console.log("Game session saved:", data);
+    } else {
+      console.error("Failed to save game session:", data);
+    }
+  } catch (error) {
+    console.error("Save error:", error);
+  }
+}
+
+function showHint() {
+  if (completed) return;
+
+  hintsUsed++;
+  score -= 10;
+
+  const hints = JSON.parse(level.hints || "[]");
+
+  if (hints.length === 0) {
+    document.getElementById("result").innerHTML =
+      "<span class='warning'>Немає підказок для цього JSON-файлу</span>";
+    return;
+  }
+
+  const hintIndex = Math.min(hintsUsed - 1, hints.length - 1);
+
+  document.getElementById("result").innerHTML =
+    "<span class='warning'>💡 Підказка:</span> " + hints[hintIndex];
+
+  if (score < 0) score = 0;
+  updateStats();
+}
+
+function resetLevel() {
+  attempts = 0;
+  hintsUsed = 0;
+  score = level.max_score || 100;
+  seconds = 0;
+  completed = false;
+  document.getElementById("gamePanel").classList.remove("success-panel");
+document.getElementById("serverMonitor").classList.remove("success-panel");
+
+  const levelIndex = serverLevels.findIndex(l => Number(l.id) === Number(level.id));
+  serverStability = Math.round(((levelIndex + 1) / serverLevels.length) * 100);
+  if (serverStability < 30) serverStability = 30;
+
+  document.getElementById("jsonInput").value = brokenJSON;
+  document.getElementById("result").innerHTML = "";
+  document.getElementById("correctPreview").innerText = "Буде показано після успіху";
+  document.getElementById("explanationPreview").innerText = "Буде показано після успіху";
+  document.getElementById("serverStatus").innerText =
+    "Файл " + level.file_name + " пошкоджено. Потрібне ручне виправлення.";
+  document.getElementById("timer").innerText = "0";
+
+  clearInterval(timerInterval);
+  updateStats();
+  startTimer();
+}
+
+function goToNextLevel(levelId, orderNumber) {
+  localStorage.setItem("selectedLevelId", levelId);
+  localStorage.setItem("selectedLevelOrder", orderNumber);
+  localStorage.setItem("currentLevelOrder_" + selectedServerId, orderNumber);
+
+  window.location.href = "index.html";
+}
+
+function finishServer() {
+  localStorage.setItem("completedServer_" + selectedServerId, serverLevels.length);
+  localStorage.removeItem("selectedLevelId");
+  localStorage.removeItem("selectedLevelOrder");
+
+  if (IS_GUEST) {
+    alert("🧪 Демо завершено! Зареєструйся, щоб проходити всі сервери й зберігати прогрес.");
+    localStorage.removeItem("guestMode");
+    window.location.href = "home.html";
+    return;
+  }
+
+  alert("🏆 Сервер стабілізовано! Нагорода додана до прогресу.");
+  window.location.href = "server.html";
+}
+
+function goBackToServer() {
+  window.location.href = "server.html";
+}
+
+function updateStats() {
+  document.getElementById("attempts").innerText = attempts;
+  document.getElementById("hints").innerText = hintsUsed;
+  document.getElementById("score").innerText = score;
+  document.getElementById("stabilityText").innerText = serverStability + "%";
+  document.getElementById("stabilityBar").style.width = serverStability + "%";
+  
+  const repairText = document.getElementById("serverRepairText");
+const repairBar = document.getElementById("serverRepairBar");
+
+if (repairText && repairBar) {
+  repairText.innerText = serverStability + "%";
+  repairBar.style.width = serverStability + "%";
+
+  if (serverStability < 25) {
+    repairBar.style.background = "#ef4444";
+  } else if (serverStability < 60) {
+    repairBar.style.background = "#facc15";
+  } else if (serverStability < 100) {
+    repairBar.style.background = "#38bdf8";
+  } else {
+    repairBar.style.background = "#4ade80";
+  }
+}
+
+  const bar = document.getElementById("stabilityBar");
+
+  if (serverStability < 40) {
+    bar.style.background = "#ef4444";
+  } else if (serverStability < 75) {
+    bar.style.background = "#facc15";
+  } else {
+    bar.style.background = "#4ade80";
+  }
+}
+
+let combo = Number(localStorage.getItem("jsonPanicCombo") || 0);
+
+function addLog(type, message) {
+  const log = document.getElementById("systemLog");
+  if (!log) return;
+
+  const line = document.createElement("div");
+  line.className = "log-line log-" + type;
+
+  const time = new Date().toLocaleTimeString();
+  line.innerText = "[" + time + "] " + message;
+
+  log.prepend(line);
+}
+
+function triggerPanic() {
+  const panel = document.getElementById("gamePanel");
+  const monitor = document.getElementById("serverMonitor");
+  const overlay = document.getElementById("panicOverlay");
+
+  if (panel) {
+    panel.classList.remove("shake");
+    void panel.offsetWidth;
+    panel.classList.add("shake");
+  }
+
+  if (monitor) {
+    monitor.classList.add("critical");
+    setTimeout(() => monitor.classList.remove("critical"), 700);
+  }
+
+  if (overlay) {
+    overlay.classList.remove("active");
+    void overlay.offsetWidth;
+    overlay.classList.add("active");
+  }
+}
+
+function triggerSuccessEffect() {
+  const panel = document.getElementById("gamePanel");
+  const monitor = document.getElementById("serverMonitor");
+
+  if (panel) {
+    panel.classList.add("restored");
+    setTimeout(() => panel.classList.remove("restored"), 1200);
+  }
+
+  if (monitor) {
+    monitor.classList.add("restored");
+    setTimeout(() => monitor.classList.remove("restored"), 1200);
+  }
+}
+
+function updateCombo(success) {
+  if (success) {
+    combo++;
+  } else {
+    combo = 0;
+  }
+
+  localStorage.setItem("jsonPanicCombo", combo);
+
+  const box = document.getElementById("comboBox");
+  if (box) {
+    box.innerText = "COMBO x" + combo;
+
+    if (combo >= 3) {
+      box.innerText += " 🔥 STREAK";
+    }
+  }
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("guestMode");
+  localStorage.removeItem("selectedServerId");
+  localStorage.removeItem("selectedLevelId");
+  localStorage.removeItem("selectedLevelOrder");
+  window.location.href = "home.html";
+}
+
+loadLevel();
+</script>
+
+</body>
+</html>

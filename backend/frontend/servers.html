@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Panic – Сервери</title>
+
+  <link rel="stylesheet" href="styles.css">
+
+</head>
+
+<script src="sound.js"></script>
+<script>
+  playMusic("menu.mp3");
+</script>
+
+<body>
+  <header>
+    <h1>🖥️ JSON Panic – сервери</h1>
+    <p>Обери сервер, який потрібно стабілізувати</p>
+
+    <nav>
+      <a href="servers.html">🖥️ Сервери</a>
+      <a href="profile.html">👤 Профіль</a>
+      <a href="leaderboard.html">🏆 Лідерборд</a>
+      <a href="help.html">📘 Довідка</a>
+      <a href="admin.html" id="adminLink" style="display:none; color:#facc15;">🛠️ Адмін</a>
+      <a href="#" id="soundToggle" onclick="toggleSound()">🔊 Звук</a>
+      <a href="#" onclick="logout()" style="color:#f87171;">🚪 Вийти</a>
+    </nav>
+  </header>
+
+  <main>
+    <div id="status"></div>
+    <section id="serversContainer" class="grid"></section>
+  </main>
+
+<script>
+const token = localStorage.getItem("token");
+const IS_GUEST = localStorage.getItem("guestMode") === "true";
+
+if (!token || IS_GUEST) {
+  window.location.href = "home.html";
+}
+
+const user = JSON.parse(localStorage.getItem("user") || "null");
+
+if (user && user.role === "admin") {
+  const adminLink = document.getElementById("adminLink");
+  if (adminLink) {
+    adminLink.style.display = "inline";
+  }
+}
+
+async function loadServers() {
+  try {
+    const response = await fetch("http://localhost:5000/api/servers");
+    const servers = await response.json();
+
+    const container = document.getElementById("serversContainer");
+    container.innerHTML = "";
+
+    servers.forEach(server => {
+      const card = document.createElement("div");
+card.className = "card server-card";
+
+      if (server.is_demo === 1) {
+        card.classList.add("demo");
+      }
+
+      card.innerHTML = `
+  <h3>${server.reward_icon} ${server.title}</h3>
+  <p class="small">${server.description}</p>
+
+  <p>
+    <span class="badge">Складність: ${server.difficulty}</span>
+    <span class="badge">Категорія: ${server.category}</span>
+    <span class="badge">JSON-файлів: ${server.total_levels}</span>
+  </p>
+
+  <p><strong>Нагорода:</strong> ${server.reward_icon} ${server.reward_name}</p>
+
+  <button onclick="openServer(${server.id})">Відкрити сервер</button>
+`;
+
+      container.appendChild(card);
+    });
+
+  } catch (error) {
+    document.getElementById("status").innerHTML =
+      "<p class='error'>Помилка завантаження серверів</p>";
+  }
+}
+
+function openServer(serverId) {
+  localStorage.setItem("selectedServerId", serverId);
+  window.location.href = "server.html";
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("selectedServerId");
+  localStorage.removeItem("selectedLevelId");
+  window.location.href = "login.html";
+}
+
+loadServers();
+</script>
+
+</body>
+</html>

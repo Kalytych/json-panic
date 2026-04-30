@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Panic – Головна</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .home-hero {
+      min-height: 100vh;
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 32px;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .home-hero::after {
+      content: "{} [] : , true false null";
+      position: absolute;
+      bottom: 20px;
+      left: 40px;
+      color: rgba(34, 211, 238, 0.12);
+      font-size: 72px;
+      font-weight: bold;
+      pointer-events: none;
+    }
+
+    .hero-title {
+      font-size: 76px;
+      margin: 0;
+      color: #22d3ee;
+      text-shadow: 0 0 22px rgba(34, 211, 238, 0.95);
+      letter-spacing: 2px;
+    }
+
+    .hero-subtitle {
+      font-size: 22px;
+      color: #cbd5e1;
+      max-width: 720px;
+      line-height: 1.5;
+    }
+
+    .terminal-alert {
+      margin-top: 24px;
+      padding: 18px;
+      border-left: 4px solid #ef4444;
+      background: rgba(127, 29, 29, 0.22);
+      color: #fecaca;
+      border-radius: 12px;
+      box-shadow: 0 0 18px rgba(239, 68, 68, 0.16);
+    }
+
+    .hero-actions {
+      margin-top: 28px;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .hero-actions a {
+      display: inline-block;
+      padding: 14px 20px;
+      border-radius: 8px;
+      background: #22d3ee;
+      color: #020617;
+      font-weight: bold;
+      text-decoration: none;
+      transition: 0.2s;
+    }
+
+    .hero-actions a:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 18px rgba(34, 211, 238, 0.8);
+    }
+
+    .hero-actions a.secondary {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+    }
+
+    .server-scene {
+      min-height: 520px;
+      position: relative;
+      background:
+        radial-gradient(circle at center, rgba(34, 211, 238, 0.16), transparent 45%),
+        rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(34, 211, 238, 0.45);
+      border-radius: 22px;
+      box-shadow: 0 0 40px rgba(34, 211, 238, 0.22);
+      overflow: hidden;
+    }
+
+    .server-scene::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent 48%, rgba(34, 211, 238, 0.08) 49%, transparent 50%),
+        linear-gradient(0deg, transparent 48%, rgba(34, 211, 238, 0.08) 49%, transparent 50%);
+      background-size: 60px 60px;
+      animation: gridMove 8s linear infinite;
+    }
+
+    @keyframes gridMove {
+      from { transform: translateY(0); }
+      to { transform: translateY(60px); }
+    }
+
+    .rack-large {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 230px;
+      transform: translate(-50%, -50%);
+      padding: 16px;
+      border: 2px solid #22d3ee;
+      border-radius: 18px;
+      background: rgba(2, 6, 23, 0.9);
+      box-shadow: 0 0 34px rgba(34, 211, 238, 0.6);
+    }
+
+    .rack-slot {
+      height: 38px;
+      margin: 10px 0;
+      background: linear-gradient(90deg, #020617, #0f172a);
+      border: 1px solid #334155;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .rack-slot::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 13px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ef4444;
+      box-shadow: 0 0 12px #ef4444;
+      animation: dangerBlink 0.8s infinite alternate;
+    }
+
+    .rack-slot:nth-child(2)::before,
+    .rack-slot:nth-child(5)::before {
+      background: #facc15;
+      box-shadow: 0 0 12px #facc15;
+    }
+
+    @keyframes dangerBlink {
+      from { opacity: 0.35; }
+      to { opacity: 1; }
+    }
+
+    .floating-log {
+      position: absolute;
+      left: 28px;
+      top: 28px;
+      width: 260px;
+      padding: 14px;
+      background: rgba(2, 6, 23, 0.84);
+      border: 1px solid #334155;
+      border-radius: 14px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .floating-log p {
+      margin: 6px 0;
+    }
+
+    .flow-line {
+      position: absolute;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #22d3ee, transparent);
+      opacity: 0.75;
+      animation: flowMove 3s infinite linear;
+    }
+
+    .line-1 { top: 30%; left: -30%; width: 55%; }
+    .line-2 { top: 60%; left: -45%; width: 65%; animation-delay: .8s; }
+    .line-3 { top: 82%; left: -35%; width: 50%; animation-delay: 1.6s; }
+
+    @keyframes flowMove {
+      from { transform: translateX(0); }
+      to { transform: translateX(220%); }
+    }
+
+    .home-sections {
+      padding: 0 40px 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 22px;
+    }
+
+    .feature-card h2 {
+      color: #5eead4;
+    }
+
+    @media (max-width: 950px) {
+      .home-hero {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-title {
+        font-size: 54px;
+      }
+    }
+  </style>
+</head>
+
+<script src="sound.js"></script>
+
+<script>
+  playMusic("menu.mp3");
+  </script>
+
+<body>
+  <section class="home-hero">
+    <div>
+      <h1 class="hero-title">JSON Panic</h1>
+      <p class="hero-subtitle">
+        Кіберпанк-симулятор аварійного відновлення серверів.
+        Виправляй пошкоджені JSON-конфіги, стабілізуй системи,
+        відкривай нагороди та піднімайся в рейтингу операторів.
+      </p>
+
+      <div class="terminal-alert">
+        <strong>[CRITICAL]</strong> Multiple server configuration files corrupted.
+        Manual JSON recovery required.
+      </div>
+
+      <div class="hero-actions">
+        <a href="#" onclick="startDemo()">🧪 Запустити демо</a>
+        <a href="login.html" class="secondary">🔐 Увійти</a>
+        <a href="register.html" class="secondary">📝 Реєстрація</a>
+        <a href="help.html" class="secondary">📘 Довідка</a>
+      </div>
+    </div>
+
+    <div class="server-scene">
+      <div class="flow-line line-1"></div>
+      <div class="flow-line line-2"></div>
+      <div class="flow-line line-3"></div>
+
+      <div class="floating-log">
+        <p class="status-danger">[ERROR] auth-config.json corrupted</p>
+        <p class="status-warning">[WARNING] database pool unstable</p>
+        <p class="status-danger">[CRITICAL] payment gateway offline</p>
+        <p class="status-good">[READY] operator input required</p>
+      </div>
+
+      <div class="rack-large">
+        <div class="rack-slot"></div>
+        <div class="rack-slot"></div>
+        <div class="rack-slot"></div>
+        <div class="rack-slot"></div>
+        <div class="rack-slot"></div>
+        <div class="rack-slot"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-sections">
+    <div class="card feature-card">
+      <h2>🖥️ Сервери-кампанії</h2>
+      <p>
+        Кожен сервер — це окрема місія з кількома пошкодженими JSON-файлами,
+        власною складністю, прогресом і нагородою.
+      </p>
+    </div>
+
+    <div class="card feature-card">
+      <h2>⚡ Ігрова напруга</h2>
+      <p>
+        Таймер, помилки, стабільність сервера, системний журнал,
+        комбо та критичні стани створюють відчуття реального інциденту.
+      </p>
+    </div>
+
+    <div class="card feature-card">
+      <h2>🏆 Прогрес і нагороди</h2>
+      <p>
+        За проходження гравець отримує бали, досягнення, корони,
+        статистику в профілі та місце у таблиці лідерів.
+      </p>
+    </div>
+  </section>
+
+<script>
+function startDemo() {
+  localStorage.setItem("guestMode", "true");
+  localStorage.setItem("selectedServerId", "1");
+  localStorage.setItem("selectedLevelId", "1");
+  localStorage.setItem("selectedLevelOrder", "1");
+  window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>

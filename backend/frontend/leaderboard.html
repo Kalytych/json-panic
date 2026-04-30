@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Panic – Лідерборд</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .leader-hero {
+      padding: 32px 40px;
+      background:
+        linear-gradient(135deg, rgba(250, 204, 21, 0.14), transparent),
+        rgba(2, 6, 23, 0.94);
+      border-bottom: 2px solid #facc15;
+    }
+
+    .leader-hero h1 {
+      margin: 0;
+      font-size: 42px;
+      color: #facc15;
+      text-shadow: 0 0 14px rgba(250, 204, 21, 0.9);
+    }
+
+    .leader-shell {
+      padding: 32px 40px;
+    }
+
+    .podium {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .podium-card {
+      text-align: center;
+      border: 1px solid rgba(250, 204, 21, 0.45);
+      background:
+        radial-gradient(circle at top, rgba(250, 204, 21, 0.18), transparent 55%),
+        rgba(15, 23, 42, 0.92);
+    }
+
+    .podium-rank {
+      font-size: 42px;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.8));
+    }
+
+    .podium-name {
+      font-size: 22px;
+      color: #5eead4;
+      font-weight: bold;
+    }
+
+    .podium-score {
+      margin-top: 8px;
+      color: #facc15;
+      font-weight: bold;
+    }
+
+    .leader-table-wrap {
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid #334155;
+      box-shadow: 0 0 24px rgba(34, 211, 238, 0.14);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(15, 23, 42, 0.92);
+      min-width: 900px;
+    }
+
+    th, td {
+      padding: 16px;
+      border-bottom: 1px solid #334155;
+      text-align: left;
+    }
+
+    th {
+      background: #020617;
+      color: #facc15;
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+
+    tr {
+      transition: 0.2s;
+    }
+
+    tr:hover {
+      background: rgba(34, 211, 238, 0.08);
+      box-shadow: inset 4px 0 0 #22d3ee;
+    }
+
+    .rank-badge {
+      display: inline-block;
+      padding: 7px 10px;
+      border-radius: 20px;
+      background: rgba(34, 211, 238, 0.14);
+      border: 1px solid #22d3ee;
+      color: #5eead4;
+      font-weight: bold;
+    }
+
+    .operator-name {
+      color: #5eead4;
+      font-weight: bold;
+    }
+
+    .score-cell {
+      color: #facc15;
+      font-weight: bold;
+      text-shadow: 0 0 8px rgba(250, 204, 21, 0.45);
+    }
+
+    .medal {
+      font-size: 22px;
+    }
+
+    .empty-state {
+      padding: 24px;
+      color: #94a3b8;
+    }
+
+    .error {
+      color: #f87171;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<script src="sound.js"></script>
+<script>
+  playMusic("game.mp3");
+</script>
+<body>
+  <header class="leader-hero">
+    <h1>🏆 Рейтинг операторів</h1>
+    <p>Турнірна панель гравців JSON Panic: бали, сервери, корони та стабілізовані JSON-файли</p>
+
+    <nav>
+      <a href="servers.html">🖥️ Сервери</a>
+      <a href="profile.html">👤 Профіль</a>
+      <a href="leaderboard.html">🏆 Лідерборд</a>
+      <a href="help.html">📘 Довідка</a>
+      <a href="#" id="soundToggle" onclick="toggleSound()">🔊 Звук</a>
+      <a href="#" onclick="logout()" style="color:#f87171;">🚪 Вийти</a>
+    </nav>
+  </header>
+
+  <main class="leader-shell">
+    <section id="podium" class="podium"></section>
+
+    <section class="leader-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Місце</th>
+            <th>Оператор</th>
+            <th>Загальний бал</th>
+            <th>JSON пройдено</th>
+            <th>Сесії</th>
+            <th>Сервери</th>
+            <th>Завершено</th>
+            <th>Золоті корони</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </section>
+
+    <div id="status"></div>
+  </main>
+
+<script>
+const USER_TOKEN = localStorage.getItem("token");
+const IS_GUEST = localStorage.getItem("guestMode") === "true";
+
+if (!USER_TOKEN || IS_GUEST) {
+  window.location.href = "home.html";
+}
+
+async function loadLeaderboard() {
+  try {
+    const response = await fetch("http://localhost:5000/api/game/leaderboard");
+    const data = await response.json();
+
+    if (!response.ok) {
+      document.getElementById("status").innerHTML =
+        "<p class='error'>Помилка завантаження лідерборду: " + data.message + "</p>";
+      return;
+    }
+
+    renderPodium(data.slice(0, 3));
+    renderTable(data);
+
+  } catch (error) {
+    document.getElementById("status").innerHTML =
+      "<p class='error'>Помилка з'єднання з сервером</p>";
+  }
+}
+
+function renderPodium(topPlayers) {
+  const podium = document.getElementById("podium");
+  podium.innerHTML = "";
+
+  if (topPlayers.length === 0) {
+    podium.innerHTML = "<div class='card empty-state'>Поки що немає результатів. Пройди перший сервер і стань першим оператором.</div>";
+    return;
+  }
+
+  const medals = ["🥇", "🥈", "🥉"];
+
+  topPlayers.forEach((player, index) => {
+    const card = document.createElement("div");
+    card.className = "card podium-card";
+
+    card.innerHTML = `
+      <div class="podium-rank">${medals[index]}</div>
+      <div class="podium-name">${player.username}</div>
+      <div class="podium-score">${player.total_score || 0} балів</div>
+      <p class="small">
+        JSON: ${player.completed_levels || 0} ·
+        Сервери: ${player.completed_servers || 0} ·
+        👑 ${player.gold_crowns || 0}
+      </p>
+    `;
+
+    podium.appendChild(card);
+  });
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById("leaderboardBody");
+  tbody.innerHTML = "";
+
+  if (data.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="empty-state">Поки що немає результатів</td>
+      </tr>
+    `;
+    return;
+  }
+
+  data.forEach((player, index) => {
+    const row = document.createElement("tr");
+
+    const medal =
+      index === 0 ? "🥇" :
+      index === 1 ? "🥈" :
+      index === 2 ? "🥉" : "🎮";
+
+    row.innerHTML = `
+      <td><span class="rank-badge">${medal} #${index + 1}</span></td>
+      <td class="operator-name">${player.username}</td>
+      <td class="score-cell">${player.total_score || 0}</td>
+      <td>${player.completed_levels || 0}</td>
+      <td>${player.total_sessions || 0}</td>
+      <td>${player.servers_started || 0}</td>
+      <td>${player.completed_servers || 0}</td>
+      <td><span class="medal">👑</span> ${player.gold_crowns || 0}</td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("guestMode");
+  localStorage.removeItem("selectedServerId");
+  localStorage.removeItem("selectedLevelId");
+  localStorage.removeItem("selectedLevelOrder");
+  window.location.href = "home.html";
+}
+
+loadLeaderboard();
+</script>
+
+</body>
+</html>

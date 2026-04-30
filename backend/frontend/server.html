@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Panic – Сервер</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .server-hero {
+      padding: 32px 40px;
+      background:
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.22), transparent 35%),
+        linear-gradient(135deg, rgba(34, 211, 238, 0.10), transparent),
+        rgba(2, 6, 23, 0.96);
+      border-bottom: 2px solid #22d3ee;
+    }
+
+    .server-hero h1 {
+      margin: 0;
+      font-size: 42px;
+      color: #22d3ee;
+      text-shadow: 0 0 15px rgba(34, 211, 238, 0.95);
+    }
+
+    .server-shell {
+      padding: 32px 40px;
+    }
+
+    .server-dashboard {
+      display: grid;
+      grid-template-columns: 1.4fr 0.9fr;
+      gap: 22px;
+      margin-bottom: 34px;
+    }
+
+    .server-visual {
+      position: relative;
+      min-height: 260px;
+      overflow: hidden;
+      border: 1px solid rgba(34, 211, 238, 0.45);
+      background:
+        radial-gradient(circle at center, rgba(34, 211, 238, 0.16), transparent 45%),
+        rgba(15, 23, 42, 0.92);
+    }
+
+    .server-rack {
+      width: 180px;
+      margin: 20px auto;
+      padding: 12px;
+      border: 2px solid #22d3ee;
+      border-radius: 14px;
+      box-shadow: 0 0 25px rgba(34, 211, 238, 0.45);
+      background: rgba(2, 6, 23, 0.9);
+    }
+
+    .rack-unit {
+      height: 34px;
+      margin: 8px 0;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #020617, #0f172a);
+      border: 1px solid #334155;
+      position: relative;
+    }
+
+    .rack-unit::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 11px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ef4444;
+      box-shadow: 0 0 10px #ef4444;
+      animation: blinkUnit 1s infinite alternate;
+    }
+
+    .rack-unit.restored::before {
+      background: #22c55e;
+      box-shadow: 0 0 10px #22c55e;
+    }
+
+    @keyframes blinkUnit {
+      from { opacity: 0.35; }
+      to { opacity: 1; }
+    }
+
+    .data-stream {
+      position: absolute;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #22d3ee, transparent);
+      animation: streamMove 3s infinite linear;
+      opacity: 0.75;
+    }
+
+    .stream-1 { top: 25%; left: -30%; width: 55%; }
+    .stream-2 { top: 52%; left: -45%; width: 70%; animation-delay: .8s; }
+    .stream-3 { top: 78%; left: -25%; width: 45%; animation-delay: 1.5s; }
+
+    @keyframes streamMove {
+      from { transform: translateX(0); }
+      to { transform: translateX(210%); }
+    }
+
+    .server-status-panel {
+      border-left: 4px solid #22d3ee;
+    }
+
+    .status-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid #334155;
+      padding: 10px 0;
+    }
+
+    .status-line span:last-child {
+      color: #5eead4;
+      font-weight: bold;
+      text-align: right;
+    }
+
+    .progress-wrapper {
+      background: #334155;
+      border-radius: 20px;
+      overflow: hidden;
+      height: 26px;
+      margin-top: 14px;
+      border: 1px solid #475569;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ef4444, #facc15, #22c55e);
+      transition: width 0.4s;
+      box-shadow: 0 0 15px rgba(34, 211, 238, 0.55);
+    }
+
+    .mission-title {
+      color: #22d3ee;
+      text-shadow: 0 0 10px rgba(34, 211, 238, 0.75);
+      margin-top: 35px;
+    }
+
+    .levels-map {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 22px;
+      margin-top: 20px;
+    }
+
+    .level-node {
+      position: relative;
+      overflow: hidden;
+      border-left: 4px solid #ef4444;
+    }
+
+    .level-node.available {
+      border-left-color: #22d3ee;
+    }
+
+    .level-node.completed {
+      border-left-color: #22c55e;
+      background:
+        linear-gradient(135deg, rgba(34, 197, 94, 0.12), transparent),
+        rgba(15, 23, 42, 0.92);
+    }
+
+    .level-node::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 80%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.13), transparent);
+      transition: 0.7s;
+    }
+
+    .level-node:hover::after {
+      left: 120%;
+    }
+
+    .file-chip {
+      display: inline-block;
+      padding: 7px 11px;
+      border-radius: 20px;
+      background: rgba(34, 211, 238, 0.12);
+      border: 1px solid #22d3ee;
+      color: #67e8f9;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .node-number {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      background: #020617;
+      border: 1px solid #22d3ee;
+      color: #5eead4;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 20px;
+      background: #020617;
+      color: #22d3ee;
+      margin-right: 6px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      border: 1px solid #334155;
+    }
+
+    .node-footer {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .locked-label,
+    .completed-label {
+      padding: 8px 11px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .locked-label {
+      color: #f87171;
+      border: 1px solid #ef4444;
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    .completed-label {
+      color: #86efac;
+      border: 1px solid #22c55e;
+      background: rgba(34, 197, 94, 0.12);
+    }
+
+    .error {
+      color: #f87171;
+    }
+
+    @media (max-width: 900px) {
+      .server-dashboard {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<script src="sound.js"></script>
+
+<script>
+  playMusic("game.mp3");
+  </script>
+
+<body>
+  <header class="server-hero">
+    <h1 id="serverTitle">Завантаження сервера...</h1>
+    <p id="serverDescription"></p>
+
+    <nav>
+      <a href="servers.html">← Сервери</a>
+      <a href="profile.html">👤 Профіль</a>
+      <a href="leaderboard.html">🏆 Лідерборд</a>
+      <a href="help.html">📘 Довідка</a>
+      <a href="admin.html" id="adminLink" style="display:none; color:#facc15;">🛠️ Адмін</a>
+      <a href="#" id="soundToggle" onclick="toggleSound()">🔊 Звук</a>
+      <a href="#" onclick="logout()" style="color:#f87171;">🚪 Вийти</a>
+    </nav>
+  </header>
+
+  <main class="server-shell">
+    <div id="status"></div>
+
+    <section class="server-dashboard">
+      <div class="card server-visual">
+        <div class="data-stream stream-1"></div>
+        <div class="data-stream stream-2"></div>
+        <div class="data-stream stream-3"></div>
+
+        <div class="server-rack" id="serverRack">
+          <div class="rack-unit"></div>
+          <div class="rack-unit"></div>
+          <div class="rack-unit"></div>
+          <div class="rack-unit"></div>
+          <div class="rack-unit"></div>
+        </div>
+
+        <p class="small" style="text-align:center;">
+          Візуалізація серверного вузла: червоні індикатори — пошкоджені модулі, зелені — відновлені.
+        </p>
+      </div>
+
+      <div class="card server-status-panel">
+        <h2>🖥️ Стан серверної системи</h2>
+
+        <div class="status-line">
+          <span>Складність</span>
+          <span id="serverDifficulty"></span>
+        </div>
+
+        <div class="status-line">
+          <span>Категорія</span>
+          <span id="serverCategory"></span>
+        </div>
+
+        <div class="status-line">
+          <span>Нагорода</span>
+          <span id="serverReward"></span>
+        </div>
+
+        <div class="status-line">
+          <span>JSON-файлів</span>
+          <span id="totalLevels"></span>
+        </div>
+
+        <div class="progress-wrapper">
+          <div id="serverProgress" class="progress-fill"></div>
+        </div>
+
+        <p id="progressText">Прогрес: 0%</p>
+        <p id="serverStateText" class="status-danger">STATUS: CRITICAL</p>
+
+        <button onclick="startFirstLevel()">▶ Почати / продовжити сервер</button>
+      </div>
+    </section>
+
+    <h2 class="mission-title">📁 Ланцюжок JSON-модулів</h2>
+    <section id="levelsContainer" class="levels-map"></section>
+  </main>
+
+<script>
+const token = localStorage.getItem("token");
+const IS_GUEST = localStorage.getItem("guestMode") === "true";
+const user = JSON.parse(localStorage.getItem("user") || "null");
+
+if (!token || IS_GUEST) {
+  window.location.href = "home.html";
+}
+
+if (user && user.role === "admin") {
+  const adminLink = document.getElementById("adminLink");
+  if (adminLink) adminLink.style.display = "inline";
+}
+
+const serverId = localStorage.getItem("selectedServerId");
+
+if (!serverId) {
+  window.location.href = "servers.html";
+}
+
+let server = null;
+let levels = [];
+let completedCount = 0;
+
+async function loadServer() {
+  try {
+    const serverResponse = await fetch("http://localhost:5000/api/servers/" + serverId);
+    server = await serverResponse.json();
+
+    const levelsResponse = await fetch("http://localhost:5000/api/servers/" + serverId + "/levels");
+    levels = await levelsResponse.json();
+
+    document.getElementById("serverTitle").innerText =
+      server.reward_icon + " " + server.title;
+
+    document.getElementById("serverDescription").innerText = server.description;
+    document.getElementById("serverDifficulty").innerText = server.difficulty;
+    document.getElementById("serverCategory").innerText = server.category;
+    document.getElementById("serverReward").innerText =
+      server.reward_icon + " " + server.reward_name;
+    document.getElementById("totalLevels").innerText = levels.length;
+
+    updateProgressPreview();
+    renderRack();
+    renderLevels();
+
+  } catch (error) {
+    document.getElementById("status").innerHTML =
+      "<p class='error'>Помилка завантаження сервера</p>";
+  }
+}
+
+function renderLevels() {
+  const container = document.getElementById("levelsContainer");
+  container.innerHTML = "";
+
+  levels.forEach((level, index) => {
+    const order = level.order_number;
+    const isCompleted = completedCount >= order;
+    const isAvailable = order <= completedCount + 1;
+
+    const card = document.createElement("div");
+    card.className = "card level-node";
+
+    if (isCompleted) card.classList.add("completed");
+    else if (isAvailable) card.classList.add("available");
+
+    let actionHtml = "";
+
+    if (isCompleted) {
+      actionHtml = `
+        <span class="completed-label">✅ MODULE RESTORED</span>
+        <button onclick="startLevel(${level.id}, ${level.order_number})">Переграти JSON</button>
+      `;
+    } else if (isAvailable) {
+      actionHtml = `<button onclick="startLevel(${level.id}, ${level.order_number})">Відкрити JSON</button>`;
+    } else {
+      actionHtml = `<span class="locked-label">🔒 Заблоковано</span>`;
+    }
+
+    card.innerHTML = `
+      <span class="file-chip">${level.file_name}</span>
+      <h3><span class="node-number">${index + 1}</span>${level.title}</h3>
+      <p>${level.description}</p>
+
+      <p>
+        <span class="badge">Складність: ${level.difficulty}</span>
+        <span class="badge">Режим: ${level.mode}</span>
+      </p>
+
+      <p><strong>Макс. бал:</strong> ${level.max_score}</p>
+      <p><strong>Час:</strong> ${level.time_limit > 0 ? level.time_limit + " сек." : "без ліміту"}</p>
+
+      <div class="node-footer">
+        ${actionHtml}
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function updateProgressPreview() {
+  const completedFull = Number(localStorage.getItem("completedServer_" + serverId) || 0);
+  const currentOrder = Number(localStorage.getItem("currentLevelOrder_" + serverId) || 1);
+  const total = levels.length || 1;
+
+  if (completedFull > 0) {
+    completedCount = completedFull;
+  } else {
+    completedCount = Math.max(currentOrder - 1, 0);
+  }
+
+  const percent = Math.round((completedCount / total) * 100);
+
+  document.getElementById("serverProgress").style.width = percent + "%";
+  document.getElementById("progressText").innerText =
+    "Прогрес: " + percent + "% (" + completedCount + " / " + total + " JSON)";
+
+  const stateText = document.getElementById("serverStateText");
+
+  if (percent >= 100) {
+    stateText.innerText = "STATUS: STABLE · SERVER RESTORED";
+    stateText.className = "status-good";
+  } else if (percent >= 60) {
+    stateText.innerText = "STATUS: PARTIAL RECOVERY";
+    stateText.className = "status-warning";
+  } else if (percent > 0) {
+    stateText.innerText = "STATUS: DEGRADED";
+    stateText.className = "status-warning";
+  } else {
+    stateText.innerText = "STATUS: CRITICAL";
+    stateText.className = "status-danger";
+  }
+}
+
+function renderRack() {
+  const units = document.querySelectorAll(".rack-unit");
+  units.forEach((unit, index) => {
+    if (index < completedCount) {
+      unit.classList.add("restored");
+    } else {
+      unit.classList.remove("restored");
+    }
+  });
+}
+
+function startFirstLevel() {
+  if (levels.length === 0) return;
+
+  const currentOrder = Number(localStorage.getItem("currentLevelOrder_" + serverId) || 1);
+  const level = levels.find(l => l.order_number === currentOrder) || levels[0];
+
+  startLevel(level.id, level.order_number);
+}
+
+function startLevel(levelId, orderNumber) {
+  localStorage.setItem("selectedLevelId", levelId);
+  localStorage.setItem("selectedLevelOrder", orderNumber);
+  localStorage.setItem("selectedServerId", serverId);
+
+  window.location.href = "index.html";
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("guestMode");
+  localStorage.removeItem("selectedServerId");
+  localStorage.removeItem("selectedLevelId");
+  localStorage.removeItem("selectedLevelOrder");
+  window.location.href = "home.html";
+}
+
+loadServer();
+</script>
+
+</body>
+</html>

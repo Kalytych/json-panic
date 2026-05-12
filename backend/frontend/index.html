@@ -154,10 +154,10 @@ let completed = false;
 
 async function loadLevel() {
   try {
-    const levelsRes = await fetch("http://localhost:5000/api/servers/" + selectedServerId + "/levels");
+    const levelsRes = await fetch("/api/game/start" + selectedServerId + "/levels");
     serverLevels = await levelsRes.json();
 
-    const res = await fetch("http://localhost:5000/api/levels/" + selectedLevelId);
+    const res = await fetch("/api/game/start" + selectedLevelId);
     level = await res.json();
 
     correctJSON = level.correct_json;
@@ -410,7 +410,7 @@ async function saveGameSession() {
   } 
 
   try {
-    const response = await fetch("http://localhost:5000/api/game/sessions", {
+    const response = await fetch("/api/game/start", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

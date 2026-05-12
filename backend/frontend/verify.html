@@ -72,7 +72,7 @@ async function verifyEmail() {
   }
 
   try {
-    const response = await fetch("http://localhost:5000/api/auth/verify-email/" + token);
+    const response = await fetch("/api/game/start" + token);
     const data = await response.json();
 
     if (!response.ok) {

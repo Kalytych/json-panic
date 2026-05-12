@@ -267,7 +267,7 @@ if (USER) {
 
 async function loadStats() {
   try {
-    const response = await fetch("http://localhost:5000/api/game/stats/me", {
+    const response = await fetch("/api/game/start", {
       method: "GET",
       headers: {
         "Authorization": "Bearer " + USER_TOKEN

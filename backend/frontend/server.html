@@ -367,10 +367,10 @@ let completedCount = 0;
 
 async function loadServer() {
   try {
-    const serverResponse = await fetch("http://localhost:5000/api/servers/" + serverId);
+    const serverResponse = await fetch("/api/game/start" + serverId);
     server = await serverResponse.json();
 
-    const levelsResponse = await fetch("http://localhost:5000/api/servers/" + serverId + "/levels");
+    const levelsResponse = await fetch("/api/game/start" + serverId + "/levels");
     levels = await levelsResponse.json();
 
     document.getElementById("serverTitle").innerText =

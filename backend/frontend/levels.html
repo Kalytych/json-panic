@@ -109,7 +109,7 @@ if (!USER_TOKEN) {
 
 async function loadLevels() {
   try {
-    const response = await fetch("http://localhost:5000/api/levels");
+    const response = await fetch("/api/game/start");
     const levels = await response.json();
 
     const container = document.getElementById("levelsContainer");

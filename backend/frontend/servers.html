@@ -53,34 +53,46 @@ if (user && user.role === "admin") {
 
 async function loadServers() {
   try {
-    const response = await fetch("/api/game/start");
+    const response = await fetch("/api/servers", {
+      method: "GET",
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+
     const servers = await response.json();
+
+    if (!response.ok) {
+      document.getElementById("status").innerHTML =
+        "<p class='error'>Помилка завантаження серверів</p>";
+      return;
+    }
 
     const container = document.getElementById("serversContainer");
     container.innerHTML = "";
 
     servers.forEach(server => {
       const card = document.createElement("div");
-card.className = "card server-card";
+      card.className = "card server-card";
 
       if (server.is_demo === 1) {
         card.classList.add("demo");
       }
 
       card.innerHTML = `
-  <h3>${server.reward_icon} ${server.title}</h3>
-  <p class="small">${server.description}</p>
+        <h3>${server.reward_icon} ${server.title}</h3>
+        <p class="small">${server.description}</p>
 
-  <p>
-    <span class="badge">Складність: ${server.difficulty}</span>
-    <span class="badge">Категорія: ${server.category}</span>
-    <span class="badge">JSON-файлів: ${server.total_levels}</span>
-  </p>
+        <p>
+          <span class="badge">Складність: ${server.difficulty}</span>
+          <span class="badge">Категорія: ${server.category}</span>
+          <span class="badge">JSON-файлів: ${server.total_levels}</span>
+        </p>
 
-  <p><strong>Нагорода:</strong> ${server.reward_icon} ${server.reward_name}</p>
+        <p><strong>Нагорода:</strong> ${server.reward_icon} ${server.reward_name}</p>
 
-  <button onclick="openServer(${server.id})">Відкрити сервер</button>
-`;
+        <button onclick="openServer(${server.id})">Відкрити сервер</button>
+      `;
 
       container.appendChild(card);
     });

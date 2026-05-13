@@ -246,7 +246,7 @@ if (!USER_TOKEN || !USER || USER.role !== "admin") {
   window.location.href = "servers.html";
 }
 
-const API = "http://localhost:5000/api/admin";
+const API = "/api/admin";
 
 async function apiGet(path) {
   const response = await fetch(API + path, {

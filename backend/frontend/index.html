@@ -154,10 +154,10 @@ let completed = false;
 
 async function loadLevel() {
   try {
-    const levelsRes = await fetch("/api/game/start" + selectedServerId + "/levels");
+    const levelsRes = await fetch("/api/servers/" + selectedServerId + "/levels");
     serverLevels = await levelsRes.json();
 
-    const res = await fetch("/api/game/start" + selectedLevelId);
+    const res = await fetch("/api/levels/" + selectedLevelId);
     level = await res.json();
 
     correctJSON = level.correct_json;
@@ -407,10 +407,10 @@ async function saveGameSession() {
   if (IS_GUEST) {
     console.log("Guest mode: session is not saved");
     return;
-  } 
+  }
 
   try {
-    const response = await fetch("/api/game/start", {
+    const response = await fetch("/api/game/sessions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

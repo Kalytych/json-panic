@@ -155,7 +155,7 @@ async function register() {
   }
 
   try {
-    const response = await fetch("/api/game/start", {
+    const response = await fetch("/api/servers/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

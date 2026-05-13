@@ -81,7 +81,7 @@ const register = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const verificationToken = crypto.randomBytes(32).toString("hex");
+        const verificationToken = null;
 
         db.run(
           `
@@ -99,8 +99,8 @@ const register = async (req, res) => {
             email,
             hashedPassword,
             "user",
-            0,
-            verificationToken
+            1,
+            null
           ],
           async function (insertErr) {
             if (insertErr) {

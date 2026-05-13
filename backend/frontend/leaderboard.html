@@ -185,8 +185,8 @@ if (!USER_TOKEN || IS_GUEST) {
 
 async function loadLeaderboard() {
   try {
-    const response = await fetch("/api/servers/");
-    const data = await response.json();
+    const response = await fetch("/api/game/leaderboard");
+const data = await response.json();
 
     if (!response.ok) {
       document.getElementById("status").innerHTML =

@@ -267,12 +267,12 @@ if (USER) {
 
 async function loadStats() {
   try {
-    const response = await fetch("/api/servers/", {
-      method: "GET",
-      headers: {
-        "Authorization": "Bearer " + USER_TOKEN
-      }
-    });
+    const response = await fetch("/api/game/stats/me", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer " + USER_TOKEN
+  }
+});
 
     const data = await response.json();
 

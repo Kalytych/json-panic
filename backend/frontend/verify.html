@@ -72,7 +72,7 @@ async function verifyEmail() {
   }
 
   try {
-    const response = await fetch("/api/servers/" + token);
+    const response = await fetch("/api/auth/verify/" + token);
     const data = await response.json();
 
     if (!response.ok) {
